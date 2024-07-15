@@ -1,0 +1,497 @@
+openapi: 3.0.3
+info:
+  title: Healthcare Administrator Service API
+  description: API specification for Healthcare Administrator Service
+  version: 1.0.11
+tags:
+  - name: APIs for Health Provider
+    description: Following are APIs designed for health providers like doctors and nurses
+  - name: APIs for Scheduling Apps
+    description: Following are APIs designed for Scheduling Apps
+paths:
+  /test:
+    post:
+      tags:
+        - APIs for Scheduling Apps
+      summary: Register a scheduled test appointment
+      description: Register a scheduled test appointment and get a corresponding test_id from Healthcare Administrator Service
+      operationId: registerTest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - patient_name
+                - start_time
+                - end_time
+                - location
+                - appt_type
+              properties:
+                email:
+                  type: string
+                  description: the email of the patient.
+                patient_name:
+                  type: string
+                  description: the name of the patient, and is case-sensitive.
+                start_time:
+                  type: string
+                  description: the start time of the testing appointment, in yyyy-MM-dd'T'HH:mm:ss format.
+                  example: "2024-03-13'T'17:30:00"
+                end_time:
+                  type: string
+                  description: the end time of the testing appointment, in yyyy-MM-dd'T'HH:mm:ss format.
+                location:
+                  type: string
+                  description: the location of appointment.
+                appt_type:
+                  type: string
+                  description: the type of appointment, choosing from flu/covid.
+            examples: 
+              patient-1:
+                value:
+                  email: "lucas@gmail.com" 
+                  patient_name: "Lucas Lee"
+                  start_time: "2024-03-13'T'17:30:00"
+                  end_time: "2024-03-13'T'18:00:00"
+                  location: "UPMC"
+                  appt_type: "covid"
+
+      responses:
+        '200':
+          description: Successful register test appointment
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - test_id
+                properties:
+                  test_id:
+                    type: string
+                    description: uuid of the test, in uuid format
+              examples: 
+                testID-example:
+                  value: 
+                    test_id: "DEB33B30-D041-41DD-8AAC-068C554A20A9"
+        '500':
+          description: Upload unsuccessful
+
+  /test/{test_id}:
+    get:
+      tags:
+        - APIs for Scheduling Apps
+      summary: Get a scheduled test result
+      description: Get a scheduled test result from a test_id from Healthcare Administrator Service
+      operationId: getTestResult
+      parameters:
+        - name: test_id
+          in: path
+          required: true
+          description: The ID of the test from which to get result
+          schema:
+            type: string
+          example: "DEB33B30-D041-41DD-8AAC-068C554A20A9"
+      responses:
+        '200':
+          description: Get test result successful
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - type
+                  - medical_info
+                  - patient_info
+                properties:
+                  type:
+                    type: string
+                    description: type of appointment, either to be flu/covid
+                  medical_info:
+                    type: object
+                    description: medical information for the patient, specific fields required based on type (flu or covid)
+                    oneOf:
+                      - $ref: '#/components/schemas/FluMedicalInfo'
+                      - $ref: '#/components/schemas/CovidMedicalInfo'
+                  patient_info:
+                    type: object
+                    required:
+                      - email
+                      - sex
+                      - date_of_birth
+                      - state
+                      - city
+                      - zipcode
+                    properties:
+                      email:
+                        description: email of user as unique identifier
+                      sex:
+                        type: string
+                        description: either male/female/intersex
+                      date_of_birth:
+                        type: string
+                        description: in yyyy-MM-dd format.
+                      state:
+                        type: string
+                        description: the state where the patient lives
+                      city:
+                        type: string
+                        description: the city where the patient lives
+                      zipcode:
+                        type: string
+                        description: the zipcode of the patient address
+              examples:
+                fluExample:
+                  value:
+                    type: "flu"
+                    medical_info:
+                      test_result: "NEGATIVE"
+                      days_sick: 3
+                      have_fever: true
+                      temperature: 101.2
+                    patient_info:
+                      email: "huanmit@gmail.com"
+                      sex: "female"
+                      date_of_birth: "2001-08-26"
+                      state: "Pennsylvania"
+                      city: "Pittsburgh"
+                      zipcode: "15213"
+                      
+                covidExample:
+                  value:
+                    type: "covid"
+                    medical_info:
+                      test_result: "POSITIVE"
+                      vaccine_count: 2
+                      covid_count: 1
+                      lung_condition: false
+                    patient_info:
+                      email: "yixinz@gmail.com"
+                      sex: "female"
+                      date_of_birth: "2001-03-11"
+                      state: "Pennsylvania"
+                      city: "Pittsburgh"
+                      zipcode: "15213"
+        '400':
+          description: Invalid test_id input
+    put:
+      tags:
+        - APIs for Scheduling Apps
+      summary: Modify appointment
+      description: Reschedule appointment
+      operationId: modifyAppointment
+      parameters:
+        - name: test_id
+          in: path
+          required: true
+          description: The ID of the test from which to get result
+          schema:
+            type: string
+          example: "DEB33B30-D041-41DD-8AAC-068C554A20A9"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start_time:
+                  type: string
+                  description: the start time of the testing appointment, in yyyy-MM-dd'T'HH:mm:ss format.
+                  example: "2024-03-13'T'17:30:00"
+                end_time:
+                  type: string
+                  description: the end time of the testing appointment, in yyyy-MM-dd'T'HH:mm:ss format.
+                location:
+                  type: string
+                  description: the location of appointment.
+                appt_type:
+                  type: string
+                  description: the type of appointment, choosing from flu/covid.
+            examples: 
+              patient-1:
+                value:
+                  start_time: "2024-03-13'T'17:30:00"
+                  end_time: "2024-03-13'T'18:00:00"
+                  location: "UPMC"
+                  appt_type: "covid"
+      responses:
+        '200':
+          description: Update appointment successful
+        '400':
+          description: Invalid test_id input
+    delete:
+      tags:
+        - APIs for Scheduling Apps
+      summary: Delete appointment
+      description: Delete an appointment
+      operationId: deleteAppointment
+      parameters:
+        - name: test_id
+          in: path
+          required: true
+          description: The ID of the test from which to get result
+          schema:
+            type: string
+          example: "DEB33B30-D041-41DD-8AAC-068C554A20A9"
+      responses:
+        '200':
+          description: Delete appointment successful
+        '400':
+          description: Invalid test_id input
+  /test/test-result:
+    post:
+      tags:
+        - APIs for Health Provider
+      summary: Post test results
+      description: Let health provider enter a test result
+      operationId: enterTestResults
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - test_id
+                - test_results
+              properties:
+                test_id:
+                  type: string
+                  description: unique identifier of the test, which will be created when scheduling test
+                test_results:
+                  type: string
+                  description: POSITIVE/NEGATIVE/UNKNOWN/PENDING
+            examples: 
+              example:
+                value: 
+                  test_id: "DFEE3590-A44D-4D57-B27E-B76346ACD832"
+                  test_results: "POSITIVE"
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid status value
+        '500':
+          description: Upload unsuccessful
+  /test/health-info:
+    post:
+      tags:
+        - APIs for Health Provider
+      summary: Post health information of the patient related to the test.
+      description: Let health provider enter medical information, either flu_info or covid_info must be provided, but not both.
+      operationId: enterHealthInfo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - test_id
+                - health_info
+              properties:
+                test_id:
+                  type: string
+                  description: Unique identifier of the test, in uuid format.
+                health_info:
+                  type: object
+                  oneOf:
+                    - $ref: '#/components/schemas/FluInfo'
+                    - $ref: '#/components/schemas/CovidInfo'
+            examples:
+              fluExample:
+                summary: Example with flu information
+                value:
+                  test_id: "123E4567-E89B-12D3-A456-426614174000"
+                  health_info:
+                    days_sick: 3
+                    have_fever: true
+                    temperature: 101.2
+              covidExample:
+                summary: Example with COVID-19 information
+                value:
+                  test_id: "123e4567-e89b-12d3-a456-426614174001"
+                  health_info:
+                    vaccine_count: 2
+                    covid_count: 1
+                    lung_condition: false         
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid status value
+        '500':
+          description: Upload unsuccessful
+  /patient-info:
+    post:
+      tags:
+        - APIs for Health Provider
+      summary: Post patient basic information
+      description: Let health provider enter patient basic non-medical information like gender, date of birth, etc.
+      operationId: enterPatientInfo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - sex
+                - date_of_birth
+                - state
+                - city
+                - zipcode
+              properties:
+                email:
+                  type: string
+                  description: the email of the patient, used as unique identifier
+                sex:
+                  type: string
+                  description: the classification of living organisms, as male, female, or intersex, based on their reproductive anatomy and biological characteristics.
+                date_of_birth:
+                  type: string
+                  description: date of birth of the patient, in format yyyy-MM-dd
+                state:
+                  type: string
+                  description: the state where the patient lives
+                city:
+                  type: string
+                  description: the city where the patient lives
+                zipcode:
+                  type: string
+                  description: the zipcode of the patient address
+            examples: 
+              example:
+                value: 
+                  email: "valttericai@gmail.com"
+                  sex: "male"
+                  date_of_birth: "2000-10-12"
+                  state: "California"
+                  city: "Santa Barbara"
+                  zipcode: "93106"
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid status value
+        '500':
+          description: Upload unsuccessful
+
+
+
+
+components:
+  schemas:
+    FluInfo:
+      type: object
+      required:
+        - days_sick
+        - have_fever
+        - temperature
+      properties:
+        days_sick:
+          type: integer
+          description: The number of days the patient has been sick with flu symptoms.
+        have_fever:
+          type: boolean
+          description: Whether the patient currently has a fever.
+        temperature:
+          type: number
+          description: The patient's current body temperature.
+    CovidInfo:
+      type: object
+      required:
+        - vaccine_count
+        - covid_count
+        - lung_condition
+      properties:
+        vaccine_count:
+          type: integer
+          description: The number of COVID-19 vaccine that the patient has received.
+        covid_count:
+          type: integer
+          description: The number of times the patient has been infected with COVID-19.
+        lung_condition:
+          type: boolean
+          description: Whether the patient has any pre-existing lung diseases/conditions.
+    FluMedicalInfo:
+      type: object
+      properties:
+        test_result:
+          type: string
+          description: test result, either to be POSITIVE/NEGATIVE/UNKNOWN/PENDING
+        days_sick:
+          type: integer
+        have_fever:
+          type: boolean
+        temperature:
+          type: number
+    CovidMedicalInfo:
+      type: object
+      properties:
+        test_result:
+          type: string
+          description: test result, either to be POSITIVE/NEGATIVE/UNKNOWN/PENDING
+        vaccine_count:
+          type: integer
+        covid_count:
+          type: integer
+        lung_condition:
+          type: boolean
+  
+  # /test-info/{test_id}:
+  #   get:
+  #     tags:
+  #       - APIs for Health Provider
+  #     summary: Get test information
+  #     description: Let health provider get test/appointment information including patient name and test schedule
+  #     operationId: getTestInfo
+  #     parameters:
+  #       - name: test_id
+  #         in: path
+  #         required: true
+  #         description: The ID of the test from which to get result
+  #         schema:
+  #           type: string
+  #         example: "DEB33B30-D041-41DD-8AAC-068C554A20A9"
+  #     responses:
+  #       '200':
+  #         description: Successful operation
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               required:
+  #                 - patient_name
+  #                 - appointment_start
+  #                 - appointment_end
+  #               properties:
+  #                 patient_name:
+  #                   type: string
+  #                   description: the name of the patient, and is case-sensitive.
+  #                 appointment_start:
+  #                   type: string
+  #                   description: the start time of the testing appointment, in yyyy-MM-dd'T'HH:mm:ss format.
+  #                   example: "2024-03-13'T'17:30:00"
+  #                 appointment_end:
+  #                   type: string
+  #                   description: the end time of the testing appointment, in yyyy-MM-dd'T'HH:mm:ss format.
+  #             examples: 
+  #               example:
+  #                 value: 
+  #                   patient_name: "Lucas Lee"
+  #                   appointment_start: "2024-03-13'T'17:30:00"
+  #                   appointment_end: "2024-03-13'T'18:00:00"
+  #       '400':
+  #         description: Invalid status value
+  #       '500':
+  #         description: Upload unsuccessful
+
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/SIRUICHE/Healthcare-Administrator-Service-API/1.0.11

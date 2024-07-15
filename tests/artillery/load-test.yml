@@ -1,0 +1,14 @@
+config:
+  target: 'http://128.2.204.151:3000/' # Application's base URL
+  processor: "./testModifyAppt.js"
+  # phases:
+  #   - duration: 1 # Test duration in seconds
+  #     arrivalCount: 1 # Number of virtual users to spawn in this phase
+  engines:
+    playwright: {}
+      # launchOptions:
+      #     headless: false
+
+scenarios:
+  - engine: playwright
+    flowFunction: "testModifyAppt"

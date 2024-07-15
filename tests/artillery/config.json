@@ -1,0 +1,14 @@
+{
+    "baseUrl": "http://128.2.204.151:3000/",
+    "users": [
+    {
+      "name": "Bilbo Baggins",
+      "email": "bilbob@ring.com"
+    },
+    {
+      "name": "Meriadoc Brandybuck",
+      "email": "meriadocb@ring.com"
+    }
+    ]
+  }
+  

@@ -1,0 +1,16 @@
+version: "3"
+
+services:
+  backend:
+    image: myfix16/17723-backend
+    container_name: backend
+    restart: always
+    ports:
+      - "8080:8080"
+
+  datanode:
+    image: myfix16/17723-frontend
+    container_name: frontend
+    restart: always
+    ports:
+      - "80:80"
